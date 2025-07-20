@@ -89,3 +89,126 @@ This project implements a Retrieval-Augmented Generation (RAG) system designed t
 ## Setup Instructions
 
 ### 1. Clone the Repository
+### 2. Create and Activate a Virtual Environment
+
+It's highly recommended to use a virtual environment to manage dependencies.
+
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Install and Run MongoDB
+
+Ensure you have MongoDB installed and running on your system.
+
+* **Download:** [MongoDB Community Server](https://www.mongodb.com/try/download/community)
+
+* **Installation:** Follow the official MongoDB installation guide for your operating system.
+
+* **Verify Running:** After installation, ensure the MongoDB service is running (e.g., check `services.msc` on Windows, or `systemctl status mongod` on Linux). It typically runs on `localhost:27017`.
+
+### 5. Configure API Keys and Email
+
+#### a. Entrez Email
+
+PubMed's Entrez API requires you to provide your email address. You can set this directly in the web interface under "Backend Configuration" after starting the application.
+
+#### b. Google Gemini API Key
+
+To use the RAG functionality, you need a Google Gemini API Key.
+
+* **Get a key:** [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+* **Set in Interface:** Enter your API key in the "Gemini API Key" field in the web interface under "Backend Configuration". This will be stored in your browser's local storage.
+
+## How to Run the Application
+
+### 1. Start the FastAPI Backend
+
+Navigate to the project root directory in your terminal (where `main.py` is located) and run:
+
+```bash
+uvicorn main:app --reload
+```
+
+
+You should see output indicating that Uvicorn is running, typically on `http://127.0.0.1:8000`. The `--reload` flag will automatically restart the server when you make changes to the Python files.
+
+### 2. Access the Web Frontend
+
+Open your web browser and navigate to:
+
+http://localhost:8000/
+
+Perform a hard refresh (`Ctrl + Shift + R` or `Cmd + Shift + R`) if the page doesn't load correctly or if you've made recent frontend changes.
+
+## Usage
+
+### 1. Backend Configuration
+
+* **FastAPI Backend URL:** Defaults to `http://localhost:8000`. Change if your backend is running on a different address/port.
+
+* **Gemini API Key:** Paste your Google Gemini API Key here. This is crucial for the "Ask a Question" feature.
+
+* **Entrez Email:** Enter your email address for PubMed API access. This is required for "Data Ingestion".
+
+### 2. Data Ingestion
+
+* Enter a **"Search Term"** (e.g., "CRISPR", "Alzheimer's disease").
+
+* Specify **"Max Results"** (number of articles to fetch).
+
+* Click **"Ingest Data"**. The system will fetch articles, chunk abstracts, create embeddings, and store data in MongoDB and ChromaDB. This may take some time depending on `max_results`.
+
+* You can click **"Clear All Data"** to remove all ingested articles from both databases.
+
+### 3. Database Metadata
+
+* The "Total Articles" counter shows how many articles are currently stored in MongoDB.
+
+* Click **"Refresh Metadata"** to update this count.
+
+### 4. Ask a Question (RAG)
+
+* Type your question in the **"Your Question"** textarea (e.g., "What are the therapeutic applications of CRISPR-Cas9?").
+
+* Click **"Ask"**. The system will retrieve relevant context from ChromaDB and use the Gemini LLM to generate an answer. The answer and the context documents will be displayed.
+
+### 5. Author Co-authorship Network
+
+* Click **"Load Context-based Network Graph"**.
+
+* **If you have just asked a question**, the graph will display the co-authorship network *only* among the authors of the articles that were part of the LLM's context.
+
+* **If no context is available (e.g., after clearing data or before asking a question)**, it will load the co-authorship network from *all* articles in the database.
+
+* **Interaction:**
+
+  * **Drag nodes:** Click and drag author nodes to move them.
+
+  * **Zoom/Pan:** Use your mouse wheel to zoom in/out, and click-drag the background to pan.
+
+  * **Link Tooltip:** Hover over a link (line between two authors) to see the titles and PMIDs of the articles they co-authored. Thicker links indicate more shared articles.
+
+## Project Structure
+
+'''bash
+.
+├── main.py                 # FastAPI backend application
+├── mongodb_handler.py      # Handles MongoDB interactions
+├── chromadb_handler.py     # Handles ChromaDB interactions and embedding model loading
+├── pubmed_ingestor.py      # Logic for fetching and ingesting PubMed data
+├── index.html              # Frontend HTML structure
+├── script.js               # Frontend JavaScript logic
+├── style.css               # Frontend CSS styling
+└── README.md               # This file
+
+```
+
