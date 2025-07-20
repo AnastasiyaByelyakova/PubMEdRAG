@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PubMed RAG System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js CDN for graph visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-4xl text-center mb-8 font-bold">
+            <i class="fas fa-microscope text-blue-500 mr-3"></i>PubMed RAG System
+        </h1>
+
+        <!-- Backend URL Configuration -->
+        <div class="card mb-6">
+            <h2 class="text-xl font-semibold mb-4 section-title">Backend Configuration</h2>
+            <div class="flex items-center space-x-4 mb-4">
+                <label for="backendUrl" class="font-medium text-gray-700">FastAPI Backend URL:</label>
+                <input type="text" id="backendUrl" value="http://localhost:8000" class="flex-grow">
+                <button id="setBackendUrlBtn" class="btn-primary">Set URL</button>
+            </div>
+            <p id="urlStatus" class="text-sm text-gray-600 mt-2">Current URL: <span id="currentBackendUrl">http://localhost:8000</span></p>
+
+            <div class="flex items-center space-x-4 mt-6">
+                <label for="geminiApiKey" class="font-medium text-gray-700">Gemini API Key:</label>
+                <input type="password" id="geminiApiKey" placeholder="Enter your Gemini API Key" class="flex-grow">
+                <button id="setApiKeyBtn" class="btn-primary">Set Key</button>
+            </div>
+            <p id="apiKeyStatus" class="text-sm text-gray-600 mt-2">API Key status: <span id="currentApiKeyStatus">Not Set</span></p>
+
+            <div class="flex items-center space-x-4 mt-6">
+                <label for="entrezEmail" class="font-medium text-gray-700">Entrez Email:</label>
+                <input type="text" id="entrezEmail" placeholder="Enter your Entrez Email" class="flex-grow">
+                <button id="setEntrezEmailBtn" class="btn-primary">Set Email</button>
+            </div>
+            <p id="entrezEmailStatus" class="text-sm text-gray-600 mt-2">Entrez Email status: <span id="currentEntrezEmailStatus">Not Set</span></p>
+        </div>
+
+        <!-- Data Ingestion Section -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4 section-title">
+                <i class="fas fa-database text-green-500 mr-2"></i>Data Ingestion
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label for="ingestTerm" class="block text-sm font-medium text-gray-700 mb-1">Search Term (e.g., CRISPR):</label>
+                    <input type="text" id="ingestTerm" value="CRISPR" placeholder="Enter PubMed search term" class="w-full">
+                </div>
+                <div>
+                    <label for="maxResults" class="block text-sm font-medium text-gray-700 mb-1">Max Results:</label>
+                    <input type="number" id="maxResults" value="10" min="1" class="w-full">
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="ingestBtn" class="btn-primary flex items-center">
+                    <i class="fas fa-upload mr-2"></i>Ingest Data
+                    <span id="ingestSpinner" class="loading-spinner hidden"></span>
+                </button>
+                <button id="clearDbBtn" class="btn-secondary flex items-center">
+                    <i class="fas fa-trash-alt mr-2"></i>Clear All Data
+                </button>
+            </div>
+            <p id="ingestStatus" class="text-sm text-gray-600 mt-3"></p>
+        </div>
+
+        <!-- Database Metadata Section -->
+        <div class="card mt-6">
+            <h2 class="text-xl font-semibold mb-4 section-title">
+                <i class="fas fa-info-circle text-purple-500 mr-2"></i>Database Metadata
+            </h2>
+            <p class="text-gray-800">Total Articles: <span id="articleCount" class="font-bold text-blue-700">0</span></p>
+            <button id="refreshMetadataBtn" class="btn-secondary mt-4 flex items-center">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Metadata
+                <span id="metadataSpinner" class="loading-spinner hidden"></span>
+            </button>
+        </div>
+
+        <!-- RAG Query Section -->
+        <div class="card mt-6">
+            <h2 class="text-xl font-semibold mb-4 section-title">
+                <i class="fas fa-question-circle text-orange-500 mr-2"></i>Ask a Question (RAG)
+            </h2>
+            <div class="mb-4">
+                <label for="questionInput" class="block text-sm font-medium text-gray-700 mb-1">Your Question:</label>
+                <textarea id="questionInput" rows="3" placeholder="e.g., What are the applications of CRISPR-Cas9 in gene editing?" class="w-full"></textarea>
+            </div>
+            <button id="askBtn" class="btn-primary flex items-center">
+                <i class="fas fa-paper-plane mr-2"></i>Ask
+                <span id="askSpinner" class="loading-spinner hidden"></span>
+            </button>
+            <div class="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Answer:</h3>
+                <p id="llmAnswer" class="text-gray-700 whitespace-pre-wrap"></p>
+                <h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">Context Used:</h3>
+                <div id="contextUsed" class="text-sm text-gray-600 max-h-60 overflow-y-auto border border-gray-300 p-3 rounded-md bg-gray-50">
+                    <p>No context retrieved yet.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article-Author Network Visualization -->
+        <div class="card mt-6">
+            <h2 class="text-xl font-semibold mb-4 section-title">
+                <i class="fas fa-project-diagram text-red-500 mr-2"></i>Author Co-authorship Network (Context-based)
+            </h2>
+            <button id="loadNetworkBtn" class="btn-secondary flex items-center mb-4">
+                <i class="fas fa-chart-network mr-2"></i>Load Context-based Network Graph
+                <span id="networkSpinner" class="loading-spinner hidden"></span>
+            </button>
+            <div id="networkGraph" class="network-graph" style="width: 100%; height: 600px;">
+                <!-- D3.js graph will be rendered here -->
+            </div>
+            <div id="networkTooltip" class="tooltip"></div>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="/static/script.js"></script>
+</body>
+</html>
