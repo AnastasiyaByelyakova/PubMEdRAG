@@ -199,7 +199,7 @@ Perform a hard refresh (`Ctrl + Shift + R` or `Cmd + Shift + R`) if the page doe
 
 ## Project Structure
 
-'''bash
+```bash
 .
 ├── main.py                 # FastAPI backend application
 ├── mongodb_handler.py      # Handles MongoDB interactions
